@@ -1,0 +1,34 @@
+#include <iostream>
+#include <random>
+
+double f(double x) {
+    return x * x; // интегрирую функцию
+}
+
+int main() {
+    setlocale(LC_ALL, "Russian");
+    int m; // Количество случайно выбранных точек
+    std::cout << "Введите любое число случайных точек: ";
+    std::cin >> m;
+
+    double a, b; // Пределы интегрирования
+    std::cout << "Введите нижний предел интегрирования: ";
+    std::cin >> a;
+    std::cout << "Введите верхний предел интегрирования: ";
+    std::cin >> b;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(a, b);
+
+    double sum = 0.0;
+    for (int i = 0; i < m; ++i) {
+        double x = dis(gen);
+        sum += f(x);
+    }
+
+    double integral = (b - a) * sum / m;
+    std::cout << "Интеграл, вычисленный методом Монте-Карло: " << integral << std::endl;
+
+    return 0;
+}
