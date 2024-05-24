@@ -1,0 +1,62 @@
+#include <iostream>
+#include <random>
+#include <vector>
+#include <thread>
+#include <mutex>
+
+double f(double x) {
+    return x * x; // интегрирую функцию
+}
+
+void monte_carlo_integrate(int num_points, double a, double b, double& result, std::mutex& result_mutex) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(a, b);
+
+    double local_sum = 0.0;
+    for (int i = 0; i < num_points; ++i) {
+        double x = dis(gen);
+        local_sum += f(x);
+    }
+
+  
+    std::lock_guard<std::mutex> guard(result_mutex);
+    result += local_sum;
+}
+
+int main() {
+    setlocale(LC_ALL, "Russian");
+    int m; 
+    std::cout << "Введите любое число случайных точек: ";
+    std::cin >> m;
+
+    double a, b; 
+    std::cout << "Введите нижний предел интегрирования: ";
+    std::cin >> a;
+    std::cout << "Введите верхний предел интегрирования: ";
+    std::cin >> b;
+
+    int num_threads = std::thread::hardware_concurrency();
+    std::vector<std::thread> threads;
+    std::mutex result_mutex;
+    double sum = 0.0;
+
+    int points_per_thread = m / num_threads;
+    int remaining_points = m % num_threads;
+
+   
+    for (int i = 0; i < num_threads; ++i) {
+        int points = points_per_thread + (i < remaining_points ? 1 : 0);
+        threads.emplace_back(monte_carlo_integrate, points, a, b, std::ref(sum), std::ref(result_mutex));
+    }
+
+   
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    double integral = (b - a) * sum / m;
+    std::cout << "Интеграл, вычисленный методом Монте-Карло: " << integral << std::endl;
+
+    return 0;
+}
